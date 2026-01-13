@@ -1,0 +1,36 @@
+agent: "claude --dangerously-skip-permissions"
+max_iterations: 25
+user_story_id_regexp: "^US[0-9]{5}$"
+instructions: |-
+  # Agent instructions
+
+  ## Your task
+  1. Read stories.yaml
+  2. Read progress.md
+  3. Pick highest priority story where `passes: false`
+  4. Implement that ONE story
+  5. Run checks and tests
+  6. Update CLAUDE.md files with learnings
+  7. Update README.md for human documentations
+  8. Commit using story title and story implementation description
+  9. Update stories.yaml with `passes: true` if the implementation is a success
+  10. Append learnings to progress.md
+
+  ## Progress Format
+  Append to progress.txt:
+  ```markdown
+  ## [DATE] - [StoryID] - [Story Title]
+  - Status of the implementation of this story
+  - What was implemented
+  - Files changed
+  - **Learnings:**
+    - Pattern discovered
+    - Gotchas encountered
+    - Remaining issues (if any)
+  ---
+  ```
+
+  ## Stop iterations
+  If ALL stories pass, reply:
+  <promise>COMPLETE</promise>
+  Otherwise end normally.
