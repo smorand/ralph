@@ -9,7 +9,8 @@ Ralph is a Bash-based agent orchestration system that automates user story imple
 ## Running Ralph
 
 ```bash
-./ralph.sh
+./ralph.sh check   # Validate tools and stories.yaml
+./ralph.sh run     # Validate and start the implementation loop
 ```
 
 The script loops up to `max_iterations` (default 25), passing instructions to Claude via stdin. It exits successfully when output contains `<promise>COMPLETE</promise>` or fails after max iterations.
