@@ -3,6 +3,28 @@ set -euo pipefail;
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)";
 
+# Usage
+usage() {
+  echo "Usage: $0 <command>";
+  echo "";
+  echo "Commands:";
+  echo "  check   Validate tools and stories.yaml without starting the agent";
+  echo "  run     Validate and start the implementation loop";
+  exit 1;
+}
+
+# Require a command
+if [[ $# -lt 1 ]]; then
+  usage;
+fi;
+
+COMMAND="$1";
+
+if [[ "${COMMAND}" != "check" && "${COMMAND}" != "run" ]]; then
+  echo "ERROR: Unknown command '${COMMAND}'";
+  usage;
+fi;
+
 # Detect OS for install instructions
 if [[ "$(uname -s)" == "Darwin" ]]; then
   OS="mac";
@@ -37,29 +59,38 @@ check_command "git" \
 
 # Check claude CLI (extract binary name from config, handle arguments)
 AGENT_CMD="$(cat "${SCRIPT_DIR}/ralph.yaml" | yq -r ".agent")";
-AGENT_BIN="${AGENT_CMD%% *}";
+AGENT_BIN_NAME="${AGENT_CMD%% *}";
 
-if ! command -v "${AGENT_BIN}" &> /dev/null; then
-  echo "ERROR: '${AGENT_BIN}' is not installed.";
+if ! command -v "${AGENT_BIN_NAME}" &> /dev/null; then
+  echo "ERROR: '${AGENT_BIN_NAME}' is not installed.";
   echo "To install: npm install -g @anthropic-ai/claude-code";
   exit 1;
 fi;
 
 echo "All required tools are installed.";
 
-AGENT_BIN="${AGENT_CMD}";
-MAX_ITERATIONS="$(cat "${SCRIPT_DIR}/ralph.yaml" | yq -r ".max_iterations")";
-PROMPT="$(cat "${SCRIPT_DIR}/ralph.yaml" | yq -r ".instructions")";
-US_ID_REGEXP=$(cat "${SCRIPT_DIR}/ralph.yaml" | yq -r ".user_story_id_regex");
-
-# User stories must have valid ID, title and tests at least. Passes must exist or be forced to false if missing.
-
+# Check stories.yaml exists
 STORIES_FILE="${SCRIPT_DIR}/stories.yaml";
+
+if [[ ! -f "${STORIES_FILE}" ]]; then
+  echo "ERROR: stories.yaml not found.";
+  echo "Copy stories.yaml.template to stories.yaml and add your user stories.";
+  exit 1;
+fi;
+
+# Load configuration
+US_ID_REGEXP=$(cat "${SCRIPT_DIR}/ralph.yaml" | yq -r ".user_story_id_regex");
 
 # Validate stories and add missing passes field
 echo "Validating user stories...";
 
 STORY_COUNT=$(yq -r 'length' "${STORIES_FILE}");
+
+if [[ "${STORY_COUNT}" -lt 1 ]]; then
+  echo "ERROR: stories.yaml is empty. Add at least one user story.";
+  exit 1;
+fi;
+
 for i in $(seq 0 $((STORY_COUNT - 1))); do
   STORY_ID=$(yq -r ".[$i].id // \"\"" "${STORIES_FILE}");
   STORY_TITLE=$(yq -r ".[$i].title // \"\"" "${STORIES_FILE}");
@@ -91,20 +122,31 @@ for i in $(seq 0 $((STORY_COUNT - 1))); do
   fi;
 done;
 
-echo "All ${STORY_COUNT} stories validated successfully";
+echo "All ${STORY_COUNT} stories validated successfully.";
+
+# Exit here if only checking
+if [[ "${COMMAND}" == "check" ]]; then
+  echo "Check complete. Ready to run.";
+  exit 0;
+fi;
+
+# Run mode: start the agent loop
+AGENT_BIN="${AGENT_CMD}";
+MAX_ITERATIONS="$(cat "${SCRIPT_DIR}/ralph.yaml" | yq -r ".max_iterations")";
+PROMPT="$(cat "${SCRIPT_DIR}/ralph.yaml" | yq -r ".instructions")";
 
 echo "Starting agent";
 for i in $(seq 1 $MAX_ITERATIONS); do
   echo "═══════ Iteration ${i} ═══════";
-  
+
   OUTPUT=$(echo "${PROMPT}" | ${AGENT_BIN} 2>&1 | tee /dev/stderr) || true;
-  
+
   if echo "${OUTPUT}" | grep -q "<promise>COMPLETE</promise>";
   then
     echo "Done!";
     exit 0;
   fi;
-  
+
   sleep 2;
 
 done;
