@@ -7,14 +7,15 @@ instructions: |-
     ## Your task
     1. Read stories.yaml
     2. Read progress.md
-    3. Pick highest priority story where `passes: false`
-    4. Implement that ONE story
-    5. Run checks and tests
+    3. Pick the story where `passes: false` with lowest `priority`, then lowest US number
+    4. Implement that ONE story ONLY - DO NOT proceed to other stories
+    5. Run checks and tests then remove tests files
     6. Update CLAUDE.md files with learnings
     7. Update README.md for human documentations
     8. Commit using story title and story implementation description
     9. Update stories.yaml with `passes: true` if the implementation is a success
     10. Append learnings to progress.md
+    11. STOP HERE - Do not implement any other story in this iteration
 
     ## Progress Format
     Append to progress.txt:

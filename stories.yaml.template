@@ -1,15 +1,16 @@
 # Stories Template
 # Copy this file to stories.yaml and customize for your project
 #
-# Story ID format must match the regex in ralph.yaml (default: ^US[0-9]{5}$)
-# Stories are processed in order - highest priority first (top of file)
+# Story ID format must match the regex in ralph.yaml (default: ^US-[0-9]{5}$)
+# Stories are processed by priority (lowest number = highest priority)
 # Set passes: false for stories that need implementation
 #
 # Required fields: id, title, tests
-# Optional fields: description, passes (defaults to false if missing)
+# Optional fields: description, priority (defaults to 1), passes (defaults to false)
 
 - id: US-00001
   title: Short descriptive title
+  priority: 1
   description: |
     Optional detailed description of what needs to be implemented.
     Include acceptance criteria and expected behavior.
@@ -21,6 +22,7 @@
 
 - id: US-00002
   title: Another story title
+  priority: 2
   tests:
     - unit tests pass
     - integration test validates feature

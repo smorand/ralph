@@ -117,8 +117,15 @@ for i in $(seq 0 $((STORY_COUNT - 1))); do
 
   # Add passes: false if missing
   if [[ "${HAS_PASSES}" == "false" ]]; then
-    echo "Adding passes: false to story ${STORY_ID}";
-    yq -i ".[$i].passes = false" "${STORIES_FILE}";
+    TMP_FILE=$(mktemp);
+    yq ".[$i].passes = false" "${STORIES_FILE}" > "${TMP_FILE}" && mv "${TMP_FILE}" "${STORIES_FILE}";
+  fi;
+
+  # Add priority: 1 if missing
+  HAS_PRIORITY=$(yq -r ".[$i] | has(\"priority\")" "${STORIES_FILE}");
+  if [[ "${HAS_PRIORITY}" == "false" ]]; then
+    TMP_FILE=$(mktemp);
+    yq ".[$i].priority = 1" "${STORIES_FILE}" > "${TMP_FILE}" && mv "${TMP_FILE}" "${STORIES_FILE}";
   fi;
 done;
 
@@ -137,6 +144,7 @@ PROMPT="$(cat "${SCRIPT_DIR}/ralph.yaml" | yq -r ".instructions")";
 
 echo "Starting agent";
 for i in $(seq 1 $MAX_ITERATIONS); do
+  echo "";
   echo "═══════ Iteration ${i} ═══════";
 
   OUTPUT=$(echo "${PROMPT}" | ${AGENT_BIN} 2>&1 | tee /dev/stderr) || true;
