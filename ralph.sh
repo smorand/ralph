@@ -93,6 +93,13 @@ fi;
 
 for i in $(seq 0 $((STORY_COUNT - 1))); do
   STORY_ID=$(yq -r ".[$i].id // \"\"" "${STORIES_FILE}");
+  STORY_PASSES=$(yq -r ".[$i].passes // false" "${STORIES_FILE}");
+
+  # Skip validation for stories that already pass
+  if [[ "${STORY_PASSES}" == "true" ]]; then
+    continue;
+  fi;
+
   STORY_TITLE=$(yq -r ".[$i].title // \"\"" "${STORIES_FILE}");
   TESTS_COUNT=$(yq -r ".[$i].tests | length" "${STORIES_FILE}");
   HAS_PASSES=$(yq -r ".[$i] | has(\"passes\")" "${STORIES_FILE}");
